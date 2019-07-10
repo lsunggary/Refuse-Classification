@@ -1,15 +1,19 @@
 FROM centos
 MAINTAINER lsunggary<479808611@qq.com>
 
-#镜像的操作指令 
-RUN yum install -y wget &&\
-wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo &&\
-yum install -y nginx &&\
-echo "daemon off;" >>/etc/nginx/nginx.conf
-#添加文件需存在当前目录下
-ADD index.html /usr/share/nginx/html/index.html
-EXPOSE 80
-#容器启动时执行命令
-CMD /usr/sbin/nginx
-#TEST ECHO
-RUN echo "hello docker" >index.html
+RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 
+RUN rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm 
+#安装nginx 
+RUN yum -y install gcc gcc-c++ \
+openssl openssl-devel \
+zlib zlib-devel \
+nginx supervisor 
+EXPOSE 80 
+RUN rm -rf /var/lib/yum/history/*.sqlite &&\
+rm -rf /var/cache/yum 
+RUN rm -f /etc/supervisord.conf 
+COPY supervisord.conf /etc/ 
+COPY www.conf /etc/nginx/conf.d/ 
+COPY nginx.conf /etc/nginx/ 
+#CMD ["/usr/sbin/nginx","-g","daemon off;"] 
+CMD ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
